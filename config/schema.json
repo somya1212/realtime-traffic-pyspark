@@ -1,0 +1,10 @@
+{
+    "fields": [
+      {"name": "timestamp", "type": "string"},
+      {"name": "region", "type": "string"},
+      {"name": "road_id", "type": "string"},
+      {"name": "vehicle_count", "type": "integer"},
+      {"name": "speed", "type": "double"}
+    ]
+  }
+  

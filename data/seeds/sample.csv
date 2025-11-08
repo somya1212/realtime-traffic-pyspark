@@ -1,0 +1,4 @@
+timestamp,region,road_id,vehicle_count,speed
+2025-01-01 08:00:00,North,R1,10,40.5
+2025-01-01 08:00:02,South,R2,12,37.2
+2025-01-01 08:00:04,East,R3,8,45.0
