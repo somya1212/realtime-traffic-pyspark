@@ -13,10 +13,13 @@
 | │   ├── `prepare_final_data.py` | Cleans and transforms data for streaming. |
 | │   └── `create_chunks.py` | Splits large CSV files into smaller chunks for streaming. |
 | **config/schema.json** | Defines the structure (columns + types) of our CSV data. If we change the dataset, update this file. |
+| **config/stream.yaml** | Streaming job configuration (window size, trigger interval, etc.). |
 | **data/seeds/** | Place CSV chunk files here (these act as our base data for streaming). |
 | **data/incoming_stream/** | The simulator will keep dropping new CSVs here every few seconds (git-ignored). |
 | **outputs/** | Spark writes output results here (git-ignored). |
 | **checkpoints/** | Spark's checkpoint directory for recovery (git-ignored). |
+| **docker-compose.yml** | Docker configuration for Kafka and Zookeeper. |
+| **scripts/kafka_setup.sh** | Helper script to manage Kafka Docker containers. |
 | **requirements.txt** | Python dependencies. |
 ---
 
@@ -130,4 +133,28 @@ For detailed information about data processing steps, see `CHANGES.md`.
     python -m src.stream_job
 ```
 
-You’ll see console output showing the running averages and total vehicles per region.
+You'll see console output showing the running averages and total vehicles per region.
+
+---
+
+## Kafka Setup (Optional)
+
+The project supports both file-based streaming (default) and Kafka-based streaming. To use Kafka:
+
+1. **Start Kafka using Docker:**
+   ```bash
+   ./scripts/kafka_setup.sh start
+   ./scripts/kafka_setup.sh create-topic traffic-data
+   ```
+
+2. **Run Kafka producer:**
+   ```bash
+   python src/kafka_producer.py
+   ```
+
+3. **Run streaming job in Kafka mode:**
+   ```bash
+   python -m src.stream_job --config config/stream_kafka.yaml
+   ```
+
+For detailed Kafka setup instructions, see `KAFKA_SETUP.md`.

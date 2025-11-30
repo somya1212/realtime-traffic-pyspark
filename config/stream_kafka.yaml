@@ -1,0 +1,11 @@
+input_mode: "kafka"
+kafka_bootstrap_servers: "localhost:9092"
+kafka_topic: "traffic-data"
+output_parquet: "outputs/traffic_parquet"
+metrics_csv: "outputs/metrics/metrics.csv"
+checkpoint_dir: "checkpoints/traffic"
+window: "5 seconds"
+watermark: "20 seconds"
+trigger: "20 seconds"
+mode: "append"
+
