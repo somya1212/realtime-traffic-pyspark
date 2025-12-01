@@ -82,6 +82,7 @@ def main():
         T.StructField("Total Flow",           T.StringType(),  True),
         T.StructField("Avg Occupancy",        T.StringType(),  True),
         T.StructField("Avg Speed",            T.StringType(),  True),
+        T.StructField("Region",               T.StringType(),  True),
     ])
 
     if input_mode == "kafka":
@@ -222,19 +223,41 @@ def main():
     .trigger(processingTime=trigger)
     .start())
 
-    # Sink 3 – metrics logger
+    # Sink 3 – metrics logger (on raw df)
     def log_metrics(batch_df, batch_id):
-        rows = batch_df.count()
-        ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        os.makedirs(os.path.dirname(metrics_csv), exist_ok=True)
-        with open(metrics_csv, "a") as f:
-            f.write(f"{ts},{batch_id},{rows}\n")
-        if rows > 0:
-            print(f"Processed batch {batch_id}: {rows} aggregated windows")
+        try:
+            start = time.time()
+            rows = batch_df.count()
+            duration = time.time() - start
+            throughput = rows / duration if duration > 0 else 0.0
 
-    q3 = (agg.writeStream
+            ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            config_label = f"{input_mode}|window={window}|trigger={trigger}"
+
+            os.makedirs(os.path.dirname(metrics_csv), exist_ok=True)
+            file_exists = os.path.exists(metrics_csv)
+
+            with open(metrics_csv, "a") as f:
+                if not file_exists:
+                    f.write("timestamp,batch_id,rows,duration_sec,throughput_rows_per_sec,config\n")
+                f.write(
+                    f"{ts},{batch_id},{rows},{duration:.3f},{throughput:.3f},{config_label}\n"
+                )
+
+            print(
+                f"[METRICS] config={config_label}, batch={batch_id}, "
+                f"rows={rows}, duration={duration:.3f}s, "
+                f"throughput={throughput:.3f} rows/s"
+            )
+
+        except Exception as e:
+            # Don't let metrics kill your job
+            print(f"[METRICS] error in batch {batch_id}: {e}")
+
+
+    q3 = (df.writeStream
           .foreachBatch(log_metrics)
-          .outputMode("update")
+          .outputMode("append")
           .option("checkpointLocation", os.path.join(checkpoint_dir, "metrics"))
           .trigger(processingTime=trigger)
           .start())

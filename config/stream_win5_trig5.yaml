@@ -1,0 +1,9 @@
+input_path: "data/incoming_stream"
+output_parquet: "outputs/traffic_parquet"
+metrics_csv: "outputs/metrics/metrics.csv"
+checkpoint_dir: "checkpoints/traffic"
+window: "5 seconds"
+watermark: "20 seconds"
+trigger: "5 seconds"
+mode: "append"
+
