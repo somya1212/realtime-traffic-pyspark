@@ -137,6 +137,14 @@ You'll see console output showing the running averages and total vehicles per re
 
 ---
 
+## Performance Evaluation
+
+Detailed setup, methodology, and interpretation are documented in:
+
+- `perf_experiments.md`
+
+---
+
 ## Kafka Setup (Optional)
 
 The project supports both file-based streaming (default) and Kafka-based streaming. To use Kafka:
