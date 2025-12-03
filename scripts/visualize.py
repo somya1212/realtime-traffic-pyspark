@@ -16,9 +16,8 @@ df = pd.concat([pd.read_parquet(p) for p in parts], ignore_index=True)
 df["window_start"] = pd.to_datetime(df["window_start"])
 df = df.sort_values(["region", "window_start"])
 
-# -------------------------------
+
 # ORIGINAL PLOTS
-# -------------------------------
 def save_lineplot(metric: str):
     pivot = df.pivot_table(index="window_start", columns="region",
                            values=metric, aggfunc="mean")
@@ -35,9 +34,8 @@ def save_lineplot(metric: str):
 for m in ["avg_speed", "total_vehicles", "congestion_index"]:
     save_lineplot(m)
 
-# ============================================================
-# 1. Region Comparison Grid
-# ============================================================
+
+#Region Comparison Grid
 def plot_region_grid():
     metrics = ["avg_speed", "total_vehicles", "congestion_index"]
     fig, axes = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
@@ -59,9 +57,7 @@ def plot_region_grid():
 plot_region_grid()
 
 
-# ============================================================
-# 2. Congestion vs Speed Scatter Plot
-# ============================================================
+# Congestion vs Speed Scatter Plot
 def plot_congestion_vs_speed():
     plt.figure(figsize=(8,6))
     for region, sub in df.groupby("region"):
@@ -81,9 +77,7 @@ def plot_congestion_vs_speed():
 plot_congestion_vs_speed()
 
 
-# ============================================================
-# 3. Rolling Averages
-# ============================================================
+# Rolling Averages
 def plot_rolling_averages():
     df_sorted = df.sort_values("window_start")
     df_sorted["avg_speed_roll"] = df_sorted.groupby("region")["avg_speed"].transform(lambda s: s.rolling(3, min_periods=1).mean())
@@ -111,9 +105,7 @@ def plot_rolling_averages():
 plot_rolling_averages()
 
 
-# ============================================================
-# 4. Peak Congestion Detection
-# ============================================================
+# Peak Congestion Detection
 def plot_peak_congestion(top_k=5):
     peaks = df.nlargest(top_k, "congestion_index")[["window_start","region","congestion_index"]]
     plt.figure(figsize=(8,4))
