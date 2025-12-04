@@ -4,7 +4,7 @@ from pathlib import Path
 
 spark = SparkSession.builder.appName("TrafficStream").getOrCreate()
 
-# Define a fixed schema based on our actual data columns in the LA dataset
+# define a fixed schema based on our data columns in the LA dataset
 schema = StructType([
     StructField("Timestamp", StringType(), True),
     StructField("Station", StringType(), True),
@@ -21,13 +21,13 @@ schema = StructType([
     StructField("region", StringType(), True)
 ])
 
-# Read the streaming data
+# read the streaming data
 df = (spark.readStream
           .schema(schema)
           .option("header", True)
           .csv("data/incoming_stream"))
 
-# Parse timestamp string to timestamp type
+# parse timestamp string to timestamp type
 df = df.withColumn("timestamp", F.to_timestamp("Timestamp", "yyyy-MM-dd HH:mm:ss"))
 
 

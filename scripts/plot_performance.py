@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-Plot streaming performance from outputs/metrics/metrics.csv.
-
-Generates two plots:
-- outputs/plots/latency_by_config.png
-- outputs/plots/throughput_by_config.png
-"""
+# helper script to plot throughput and latency (streaming performance) plots based on metrics
 
 import sys
 from pathlib import Path
@@ -17,13 +11,8 @@ import matplotlib.pyplot as plt
 METRICS_PATH = Path("outputs/metrics/metrics.csv")
 PLOTS_DIR = Path("plots")
 
-
+# parse the config string into window and trigger seconds
 def parse_config(config_str):
-    """
-    Parse a config string like:
-        "file|window=5 seconds|trigger=20 seconds"
-    into (window_seconds, trigger_seconds).
-    """
     window_seconds = None
     trigger_seconds = None
 
@@ -46,42 +35,42 @@ def parse_config(config_str):
 
 
 def load_and_prepare():
-    """Load metrics.csv and compute steady-state averages per config."""
+    # load the metrics csv
     if not METRICS_PATH.exists():
         print(f"[ERROR] Metrics file not found at: {METRICS_PATH}")
         sys.exit(1)
 
     df = pd.read_csv(METRICS_PATH)
 
-    # Ensure numeric types
+    # convert the duration, throughput, and batch id to numeric types
     df["duration_sec"] = pd.to_numeric(df["duration_sec"], errors="coerce")
     df["throughput_rows_per_sec"] = pd.to_numeric(
         df["throughput_rows_per_sec"], errors="coerce"
     )
     df["batch_id"] = pd.to_numeric(df["batch_id"], errors="coerce")
 
-    # Parse window / trigger from config
+    # parse window and trigger seconds 
     df[["window_seconds", "trigger_seconds"]] = df["config"].apply(
         lambda s: pd.Series(parse_config(s))
     )
 
-    # Drop rows where parsing failed
+    # drop rows where parsing failed
     df = df.dropna(subset=["window_seconds", "trigger_seconds"]).copy()
     df["window_seconds"] = df["window_seconds"].astype(int)
     df["trigger_seconds"] = df["trigger_seconds"].astype(int)
 
-    # Sort by config + batch to identify warmup batch cleanly
+    # sort by config and batch to identify warmup batch
     df = df.sort_values(["window_seconds", "trigger_seconds", "batch_id"])
 
-    # Mark first batch per (window, trigger) as warmup
+    # mark first batch per (window, trigger) as warmup
     df["is_warmup"] = (
         df.groupby(["window_seconds", "trigger_seconds"]).cumcount() == 0
     )
 
-    # Remove warmup batches (optional but usually nicer)
+    # remove warmup batches
     df_steady = df[~df["is_warmup"]].copy()
 
-    # Aggregate by config
+    # aggregate by config
     agg = (
         df_steady.groupby(["window_seconds", "trigger_seconds"], as_index=False)
         .agg(
@@ -91,20 +80,20 @@ def load_and_prepare():
         )
     )
 
-    # Create short labels like "W5–T20"
+    # create labels (like "W5–T20")
     agg["short_label"] = agg.apply(
         lambda row: f"W{int(row['window_seconds'])}–T{int(row['trigger_seconds'])}",
         axis=1,
     )
 
-    # Sort nicely: window ascending, trigger ascending
+    # sort by window and trigger seconds
     agg = agg.sort_values(["window_seconds", "trigger_seconds"]).reset_index(drop=True)
 
     return agg
 
 
 def plot_latency(agg: pd.DataFrame):
-    """Plot average batch duration per configuration."""
+    # plot average batch duration per configuration
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(8, 4))
@@ -118,7 +107,7 @@ def plot_latency(agg: pd.DataFrame):
     plt.xticks(rotation=30, ha="right")
     plt.grid(axis="y", linestyle="--", alpha=0.3)
 
-    # Note explaining the label format
+    # label format explanation
     plt.figtext(
         0.99,
         0.01,
@@ -136,7 +125,7 @@ def plot_latency(agg: pd.DataFrame):
 
 
 def plot_throughput(agg: pd.DataFrame):
-    """Plot average throughput per configuration."""
+    # plot average throughput per configuration
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(8, 4))
@@ -169,7 +158,7 @@ def plot_throughput(agg: pd.DataFrame):
 def main():
     agg = load_and_prepare()
 
-    # Print table to console 
+    # print table to console 
     print("\nAggregated performance metrics (steady state, warmup dropped):")
     print(
         agg[

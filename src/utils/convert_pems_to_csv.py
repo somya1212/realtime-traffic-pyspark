@@ -1,8 +1,4 @@
-"""
-Simple script to convert PEMS .txt file to CSV format.
-
-This reads the PEMS text file and converts it to CSV with proper column headers.
-"""
+# script to convert a raw PEMS .txt file into a cleaner csv 
 
 import pandas as pd
 from pathlib import Path
@@ -12,11 +8,9 @@ import sys
 
 def convert_pems_to_csv(input_file, output_file=None):
     """
-    Convert PEMS .txt file to CSV format.
-    
-    Args:
-        input_file: Path to PEMS .txt file
-        output_file: Path to output CSV file (default: input_file with .csv extension)
+    args:
+        input_file: path to PEMS .txt file
+        output_file: path to csv file (default: input_file with .csv extension)
     """
     print(f"Converting {input_file} to CSV...")
     
@@ -30,30 +24,27 @@ def convert_pems_to_csv(input_file, output_file=None):
             header=None
         )
         
+        # check whether the file already has a header
         first_val = str(df.iloc[0, 0]) if len(df) > 0 else ""
         
         if first_val and ('/' in first_val or '-' in first_val):
-            # First row is data, not header - add column names
             print("  No header detected, adding PEMS column names...")
             
-            # Base columns: 12 fixed columns
             num_cols = df.shape[1]
             
-            # Base columns (12 total)
+            # base columns (12 total)
             base_columns = [
                 'Timestamp', 'Station', 'District', 'Freeway #', 'Direction of Travel', 'Lane Type',
                 'Station Length', 'Samples', '% Observed', 'Total Flow', 'Avg Occupancy', 'Avg Speed'
             ]
             
-            # Calculate number of lanes: (total_cols - 12) / 5
+            # calculate number of lanes
             num_lanes = (num_cols - 12) // 5
-            
             print(f"  Detected {num_lanes} lanes ({(num_cols - 12)} lane-specific columns)")
             
-            # Build column names - only keep the base 12 columns
+            # build full column list
             column_names = base_columns.copy()
             
-            # Assign column names to all columns first
             all_column_names = base_columns.copy()
             for lane_num in range(1, num_lanes + 1):
                 all_column_names.extend([
@@ -64,16 +55,15 @@ def convert_pems_to_csv(input_file, output_file=None):
                     f'Lane {lane_num} Observed'
                 ])
             
-            # Handle any extra columns
+            # handle any extra/missing columns
             if num_cols > len(all_column_names):
                 all_column_names.extend([f'Extra_{i}' for i in range(len(all_column_names), num_cols)])
             elif num_cols < len(all_column_names):
                 all_column_names = all_column_names[:num_cols]
             
-            # Assign all column names temporarily
             df.columns = all_column_names
             
-            # Keep only the base 12 columns
+            # keep only the base 12 columns
             print(f"  Keeping only base columns, removing {num_cols - 12} lane-specific columns...")
             df = df[base_columns].copy()
         else:
@@ -81,7 +71,7 @@ def convert_pems_to_csv(input_file, output_file=None):
             df.columns = df.iloc[0]
             df = df.iloc[1:].reset_index(drop=True)
         
-        # Determine output file name
+        # output file name
         if output_file is None:
             input_path = Path(input_file)
             output_file = input_path.parent / f"{input_path.stem}.csv"
@@ -89,7 +79,7 @@ def convert_pems_to_csv(input_file, output_file=None):
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Save as CSV
+        # save as csv
         print(f"  Saving to {output_path}...")
         df.to_csv(output_path, index=False)
         
@@ -136,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

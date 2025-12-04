@@ -37,7 +37,7 @@ try:
         with open(src_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Send each row as a JSON message
+                # send each row as a json message
                 message = json.dumps(row).encode('utf-8')
                 producer.produce(topic, message, callback=lambda err, msg: None)
                 producer.poll(0)
