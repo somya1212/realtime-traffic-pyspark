@@ -1,9 +1,4 @@
-"""
-Split large CSV file into smaller chunks for streaming simulation.
-
-This script divides a large CSV file into smaller chunks and places them
-in the data/seeds/ folder for use with the stream simulator.
-"""
+# split large csv file into smaller chunks for streaming simulator
 
 import pandas as pd
 from pathlib import Path
@@ -12,40 +7,30 @@ import sys
 
 
 def create_chunks(input_file, chunk_size=5000):
-    """
-    Split CSV file into smaller chunks.
-    
-    Args:
-        input_file: Path to input CSV file
-        chunk_size: Number of rows per chunk (default: 5000)
-    """
     print(f"Splitting {input_file} into chunks...")
     
-    # Hardcoded output directory and prefix
     output_dir = "data/seeds"
     prefix = "chunk"
     
     try:
-        # Read the CSV file
         print(f"  Reading CSV file...")
         df = pd.read_csv(input_file, low_memory=False)
         
         total_rows = len(df)
-        num_chunks = (total_rows + chunk_size - 1) // chunk_size  # Ceiling division
+        num_chunks = (total_rows + chunk_size - 1) // chunk_size  
         
         print(f"  Total rows: {total_rows:,}")
         print(f"  Chunk size: {chunk_size:,} rows")
         print(f"  Number of chunks: {num_chunks}")
         
-        # Create output directory
+        # output directory
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         
-        # Get base filename without extension
+        # get base filename without extension
         input_path = Path(input_file)
         base_name = input_path.stem
         
-        # Split into chunks
         print(f"\n  Creating chunks...")
         chunk_files = []
         
@@ -53,14 +38,13 @@ def create_chunks(input_file, chunk_size=5000):
             start_idx = i * chunk_size
             end_idx = min((i + 1) * chunk_size, total_rows)
             
-            # Extract chunk
+            # extract chunk
             chunk_df = df.iloc[start_idx:end_idx].copy()
             
-            # Create filename
             chunk_filename = f"{prefix}_{i+1:04d}_{base_name}.csv"
             chunk_filepath = output_path / chunk_filename
             
-            # Save chunk
+            # save chunk
             chunk_df.to_csv(chunk_filepath, index=False)
             chunk_files.append(chunk_filepath)
             
@@ -113,4 +97,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

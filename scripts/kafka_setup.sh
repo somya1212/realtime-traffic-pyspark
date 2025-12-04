@@ -1,5 +1,5 @@
 #!/bin/bash
-# Helper script to manage Kafka Docker containers
+# Helper script to manage kafka and zookeeper via docker
 
 set -e
 
