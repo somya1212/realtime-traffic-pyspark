@@ -58,7 +58,7 @@ def main():
 
     spark_builder = SparkSession.builder.appName("TrafficStreaming")
     
-    # Add Kafka connector if using Kafka mode
+    
     if input_mode == "kafka":
         spark_builder = spark_builder.config("spark.jars.packages", 
             "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1") \
@@ -68,7 +68,7 @@ def main():
     spark.sparkContext.setLogLevel("WARN")
 
 
-    # Schema - all StringType for Kafka JSON (CSV DictReader outputs strings) this was required for the Kafka integration, otherwise the schema would be inferred from the data which would cause issues with the Kafka integration.    
+      
     pems_schema = T.StructType([
         T.StructField("Timestamp",            T.StringType(),  True),
         T.StructField("Station",              T.StringType(),  True),
@@ -94,7 +94,7 @@ def main():
                      .option("kafka.consumer.group.id", f"spark-consumer-{int(time.time())}")
                      .load())
         
-        # Parse JSON and extract Kafka timestamp for windowing
+        
         raw = (kafka_raw
                .selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_ts")
                .withColumn("parsed", F.from_json("json_str", pems_schema))
@@ -107,19 +107,19 @@ def main():
                .schema(pems_schema)
                .load(input_path))
 
-    # Helper to handle missing or blank values
+    
     def null_if_empty(colname):
         return F.when(F.trim(F.col(colname)) == "", F.lit(None)).otherwise(F.col(colname))
 
-    # Build a safe coalesce over only the columns that actually exist in the schema
+    
     present = {f.name for f in raw.schema.fields}
     def coalesce_any(candidates):
         exprs = [ null_if_empty(c) for c in candidates if c in present ]
         return F.coalesce(*exprs) if exprs else F.lit(None)
 
-    # Map PEMS -> canonical {timestamp, region, road_id, vehicle_count, speed}
+    
     if input_mode == "kafka":
-        # For Kafka: use Kafka message timestamp for windowing
+        
         df_5 = (raw
             .withColumn("road_id", F.col("Station").cast("string"))
             .withColumn("region",
@@ -140,7 +140,7 @@ def main():
               .withColumn("ts", F.col("kafka_ts"))
               .withWatermark("ts", watermark))
     else:
-        # For file mode: use data timestamp
+        
         df_5 = (raw
             .withColumn("timestamp_str", F.col("Timestamp"))
             .withColumn("road_id", F.col("Station").cast("string"))
@@ -163,7 +163,7 @@ def main():
               .filter(F.col("ts").isNotNull())
               .withWatermark("ts", watermark))
     
-    # Debug: log transformation stats
+    
     def log_transform_stats(batch_df, batch_id):
         if batch_df.count() > 0:
             total = batch_df.count()
@@ -199,7 +199,7 @@ def main():
                "congestion_index"
            ))
 
-    # Sink 1 – persistent Parquet with checkpoints
+    # Sink 1 (for persistent parquet with checkpoints)
     q1 = (agg.writeStream
           .format("parquet")
           .outputMode(mode)
@@ -208,13 +208,7 @@ def main():
           .trigger(processingTime=trigger)
           .start())
 
-    # Sink 2 – console output (live demo)
-    # q2 = (agg.writeStream
-    #       .outputMode("update")
-    #       .format("console")
-    #       .option("truncate", False)
-    #       .trigger(processingTime=trigger)
-    #       .start())
+    # Sink 2 (for console output)
     q2 = (agg.writeStream
     .outputMode("append")        
     .format("console")
@@ -223,7 +217,7 @@ def main():
     .trigger(processingTime=trigger)
     .start())
 
-    # Sink 3 – metrics logger (on raw df)
+    # Sink 3 (for metrics logger)
     def log_metrics(batch_df, batch_id):
         try:
             start = time.time()
