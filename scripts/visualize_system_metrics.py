@@ -1,8 +1,4 @@
-"""
-This script reads metrics.csv and generates extra visualizations
-(batch size vs config, latency jitter, throughput efficiency,
-latency histogram, and scaling curves).
-"""
+# reads metrics.csv and generates extra visualizations (batch size vs config, latency jitter, throughput efficiency,latency histogram, and scaling curves).
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,7 +12,7 @@ PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
 df = pd.read_csv(METRICS_PATH)
 
-# Parse timestamp if present
+# parse timestamp if present
 if "timestamp" in df.columns:
     df["timestamp"] = pd.to_datetime(df["timestamp"])
 
@@ -34,16 +30,14 @@ if "throughput_rows_per_sec" in df.columns:
 else:
     df["throughput_rps"] = df.get("processed_rps", None)
 
-# drop missing
 df = df.dropna(subset=["duration_sec", "throughput_rps", "rows"])
 
-# fill config if missing
 if "config" not in df.columns:
     df["config"] = "default"
 
 print("\nLoaded metrics with columns:", df.columns.tolist())
 
-# 1. Batch Size vs Window Config
+# batch size vs window config
 def plot_batch_size_vs_window():
     plt.figure(figsize=(10,5))
     tmp = df.groupby("config")["rows"].mean()
@@ -61,7 +55,7 @@ def plot_batch_size_vs_window():
     print(f"Saved {out}")
 
 
-# 2. Latency Variance / Jitter
+# latency variance / jitter
 def plot_latency_jitter():
     plt.figure(figsize=(10,5))
     jitter = df.groupby("config")["duration_sec"].std()
@@ -78,7 +72,7 @@ def plot_latency_jitter():
     plt.close()
     print(f"Saved {out}")
 
-# 3. Throughput Efficiency (%)
+# throughput efficiency 
 def plot_throughput_efficiency():
     plt.figure(figsize=(10,5))
     max_tp = df["throughput_rps"].max()
@@ -99,7 +93,7 @@ def plot_throughput_efficiency():
     print(f"Saved {out}")
 
 
-# 4. Latency Histogram
+# latency histogram
 def plot_latency_histogram():
     plt.figure(figsize=(10,5))
     plt.hist(df["duration_sec"], bins=20, color="purple", alpha=0.7)
@@ -115,7 +109,7 @@ def plot_latency_histogram():
     print(f"Saved {out}")
 
 
-# 5. Scaling Curve: Rows vs Duration
+#scaling curve
 def plot_scaling_curve():
     plt.figure(figsize=(10,5))
     plt.scatter(df["rows"], df["duration_sec"], alpha=0.6)
@@ -131,11 +125,11 @@ def plot_scaling_curve():
     print(f"Saved {out}")
 
 
-# Run all
+
 if __name__ == "__main__":
     plot_batch_size_vs_window()
     plot_latency_jitter()
     plot_throughput_efficiency()
     plot_latency_histogram()
     plot_scaling_curve()
-    print("\n✨ Advanced system performance visualizations generated!")
+    print("\n Advanced system performance visualizations generated!")

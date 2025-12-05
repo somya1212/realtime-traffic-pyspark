@@ -20,6 +20,9 @@
 | **checkpoints/** | Spark's checkpoint directory for recovery (git-ignored). |
 | **docker-compose.yml** | Docker configuration for Kafka and Zookeeper. |
 | **scripts/kafka_setup.sh** | Helper script to manage Kafka Docker containers. |
+| **scripts/plot_performance.py** | Helper script to plot throughput and latency (streaming performance) plots based on metrics. |
+| **scripts/visualize_data_metrics.py** | Helper script to plot metrics derived from actual traffic data. |
+| **scripts/visualize_system_metrics.py** | Helper script to plots metrics describing the streaming system’s behavior. |
 | **requirements.txt** | Python dependencies. |
 ---
 
@@ -142,6 +145,47 @@ You'll see console output showing the running averages and total vehicles per re
 Detailed setup, methodology, and interpretation are documented in:
 
 - `perf_experiments.md`
+
+---
+
+## Visualizations
+
+We generate two categories of visual insights in this project. 
+
+### **1. Data-Level Analytics (`scripts/visualize_data_metrics.py`)**
+
+These plots are created from the actual traffic data produced by the streaming job (from `outputs/traffic_parquet/`):
+
+- Average Speed Over Time
+- Total Vehicles Over Time
+- Congestion Index Over Time
+- Region Comparison Grid (speed, vehicles, congestion)
+- Congestion vs Speed Scatter Plot
+- Rolling Averages (smoothed trends)
+- Peak Congestion Windows
+
+These plots help interpret real traffic behavior across regions and across time.
+
+### **2. System-Level Performance (`scripts/visualize_system_metrics.py`)**
+
+These plots describe how the streaming system performed, using metrics collected in `outputs/metrics/metrics.csv`:
+
+- Latency Jitter (Std Dev Across Batches)
+- Throughput Efficiency (%)
+- Scaling Curve (Rows vs Duration)
+- Batch Size vs Configuration
+- Latency Histogram
+
+These plots evaluate the impact of different Spark configurations (window sizes, trigger intervals, etc.) on system behavior.
+
+Run these commands to generate all plots:
+```bash
+   python scripts/visualize_data_metrics.py
+```
+```bash
+   python scripts/visualize_system_metrics.py
+```
+All visualization outputs will be saved to: `outputs/plots/`
 
 ---
 

@@ -1,6 +1,3 @@
-#!/bin/bash
-# Helper script to manage kafka and zookeeper via docker
-
 set -e
 
 case "$1" in
